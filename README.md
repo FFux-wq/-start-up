@@ -1,13 +1,13 @@
 # 多平台整蛊下载引导页
 
-一个基于「自动下载原神」梗的朋友间整蛊工具。通过微信发送链接给朋友，页面自动检测设备并跳转——桌面端同时打开下载直链和官网，手机端尝试唤起应用商店后兜底跳转。
+一个基于「自动下载原神」梗的朋友间整蛊工具。通过微信发送链接给朋友，页面自动检测设备——桌面端触发 .exe 下载，手机端触发 APK 下载，1.5 秒后均跳转原神官网。
 
 ## 使用方法
 
-1. 将 `index.html` 部署到静态网站托管平台（如 EdgeOne Pages、Cloudflare Pages）
-2. 获取 HTTPS 链接
-3. 通过微信将链接发给朋友
-4. 对方点击链接后，页面会根据设备自动跳转
+1. 通过微信将链接发给朋友
+2. 对方点击链接后，页面会根据设备自动跳转
+
+> 部署链接：`https://ffux-wq.github.io/YS_Start_up/`
 
 ## 用户流程
 
@@ -18,18 +18,13 @@
 | 系统浏览器（iOS） | APK 下载直链 → 1.5s 后跳转原神官网 |
 | 桌面浏览器 | .exe 下载直链 → 1.5s 后跳转原神官网 |
 
-## 部署平台
+## 部署
 
-| 优先级 | 平台 | 部署命令 | 链接 |
-| :--- | :--- | :--- | :--- |
-| 主链接 | EdgeOne Pages | `npx edgeone pages deploy ./` | （待部署） |
-| 备用 | Cloudflare Pages | `npx wrangler pages deploy ./` | （待部署） |
+- **平台**：GitHub Pages
+- **仓库**：[FFux-wq/YS_Start_up](https://github.com/FFux-wq/YS_Start_up)
+- **链接**：[ffux-wq.github.io/YS_Start_up](https://ffux-wq.github.io/YS_Start_up/)
 
-### 部署步骤
-
-1. 确保已安装 Node.js（要求 v16 或以上）
-2. 在项目目录下执行上述部署命令
-3. 首次使用需完成平台账号认证
+更新部署：推送至 `YS_Start_up` 分支，GitHub Pages 自动构建。
 
 ## 技术说明
 
