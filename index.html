@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>链接跳转</title>
+  <style>
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+      background: #f7f7f7;
+      color: #353535;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ========== 跳转过渡页（非微信环境） ========== */
+    .redirect-page {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      background: #f7f7f7;
+    }
+
+    .redirect-page.hidden {
+      display: none;
+    }
+
+    .spinner {
+      width: 28px;
+      height: 28px;
+      border: 2.5px solid #e0e0e0;
+      border-top-color: #b0b0b0;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .redirect-text {
+      margin-top: 14px;
+      font-size: 14px;
+      color: #999;
+      letter-spacing: 0.5px;
+    }
+
+    /* ========== 微信引导页 ========== */
+    .wechat-guide {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #f7f7f7;
+      z-index: 100;
+    }
+
+    .wechat-guide.active {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* 右上角箭头 */
+    .guide-arrow-wrap {
+      position: fixed;
+      top: 10px;
+      right: 28px;
+      animation: arrow-bounce 1.6s ease-in-out infinite;
+    }
+
+    @keyframes arrow-bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(10px); }
+    }
+
+    .guide-arrow-head {
+      width: 0;
+      height: 0;
+      border-left: 14px solid transparent;
+      border-right: 14px solid transparent;
+      border-bottom: 22px solid #555;
+      margin: 0 auto;
+    }
+
+    .guide-arrow-body {
+      width: 6px;
+      height: 28px;
+      background: #555;
+      margin: 0 auto;
+      border-radius: 3px;
+    }
+
+    /* "···" 示意点 */
+    .guide-dots {
+      position: fixed;
+      top: 68px;
+      right: 24px;
+      display: flex;
+      gap: 5px;
+    }
+
+    .guide-dots span {
+      width: 6px;
+      height: 6px;
+      background: #999;
+      border-radius: 50%;
+    }
+
+    /* 引导文字 */
+    .guide-content {
+      margin-top: 42vh;
+      text-align: center;
+      padding: 0 32px;
+    }
+
+    .guide-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: #353535;
+      margin-bottom: 12px;
+    }
+
+    .guide-desc {
+      font-size: 15px;
+      line-height: 1.7;
+      color: #777;
+    }
+
+    .guide-desc strong {
+      color: #555;
+      font-weight: 500;
+    }
+
+    .guide-divider {
+      width: 40px;
+      height: 3px;
+      background: #ddd;
+      margin: 20px auto;
+      border-radius: 2px;
+    }
+
+    .guide-hint {
+      font-size: 13px;
+      color: #bbb;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 跳转过渡页：非微信环境默认展示 -->
+  <div class="redirect-page" id="redirectPage">
+    <div class="spinner"></div>
+    <div class="redirect-text">正在打开链接...</div>
+  </div>
+
+  <!-- 微信引导页：微信环境展示 -->
+  <div class="wechat-guide" id="wechatGuide">
+    <div class="guide-arrow-wrap">
+      <div class="guide-arrow-head"></div>
+      <div class="guide-arrow-body"></div>
+    </div>
+    <div class="guide-dots">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+    <div class="guide-content">
+      <div class="guide-title">请在浏览器中打开</div>
+      <div class="guide-desc">
+        点击右上角 <strong>···</strong> 选择<strong>【在浏览器中打开】</strong>
+      </div>
+      <div class="guide-divider"></div>
+      <div class="guide-hint">链接将在系统浏览器中自动跳转</div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      var ua = navigator.userAgent || '';
+
+      /* ========== 微信环境检测 ========== */
+      var isWeChat = /MicroMessenger/i.test(ua);
+
+      /* ========== 设备与操作系统检测 ========== */
+      var isMobile  = /Mobile|Android|iPhone|iPod/i.test(ua);
+      var isAndroid = /Android/i.test(ua);
+      var isIPhone  = /iPhone/i.test(ua);
+      /* iPad (iPadOS 13+ UA 伪装为 Mac，通过触控点辅助判断) */
+      var isIPad = /iPad/i.test(ua)
+        || (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
+      var isIOS = isIPhone || isIPad;
+
+      /* ========== 跳转目标 ========== */
+      var YS_DOWNLOAD    = 'https://ys-api.mihoyo.com/event/download_porter/link/ys_cn/official/pc_backup322';
+      var YS_OFFICIAL    = 'https://ys.mihoyo.com/main/';
+      var ANDROID_MARKET = 'market://details?id=com.miHoYo.Yuanshen';
+      var ANDROID_INTENT = 'intent://details?id=com.miHoYo.Yuanshen#Intent;scheme=market;end';
+      var ANDROID_YYB    = 'https://a.app.qq.com/o/simple.jsp?pkgname=com.miHoYo.Yuanshen';
+      var IOS_APPSTORE   = 'itms-apps://itunes.apple.com/app/id1533312051';
+      var IOS_WEB        = 'https://apps.apple.com/cn/app/id1533312051';
+
+      /* ========== 页面元素 ========== */
+      var redirectPage = document.getElementById('redirectPage');
+      var wechatGuide  = document.getElementById('wechatGuide');
+
+      /* ========== 主导流程 ========== */
+      function main() {
+        if (isWeChat) {
+          showWeChatGuide();
+        } else {
+          doRedirect();
+        }
+      }
+
+      /* 微信环境：隐藏过渡页，显示引导 */
+      function showWeChatGuide() {
+        redirectPage.classList.add('hidden');
+        wechatGuide.classList.add('active');
+      }
+
+      /* 设备判断与跳转分发 */
+      function doRedirect() {
+        if (isMobile) {
+          if (isAndroid) {
+            redirectAndroid();
+          } else if (isIOS) {
+            redirectIOS();
+          } else {
+            fallback();
+          }
+        } else {
+          /* 桌面端：新窗口触发下载 + 当前页跳官网 */
+          openBoth();
+        }
+      }
+
+      /* Android 协议唤起 → intent 备用 → 应用宝 → 官网兜底 */
+      function redirectAndroid() {
+        window.location.href = ANDROID_MARKET;
+
+        setTimeout(function () {
+          window.location.href = ANDROID_INTENT;
+
+          setTimeout(function () {
+            window.location.href = ANDROID_YYB;
+          }, 1000);
+        }, 2000);
+      }
+
+      /* iOS 协议唤起 → App Store 网页版降级 */
+      function redirectIOS() {
+        window.location.href = IOS_APPSTORE;
+
+        setTimeout(function () {
+          window.location.href = IOS_WEB;
+        }, 2000);
+      }
+
+      /* 隐藏 iframe 触发下载 + 当前页跳官网（避开弹窗拦截器，两个任务并行） */
+      function openBoth() {
+        var iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = YS_DOWNLOAD;
+        document.body.appendChild(iframe);
+
+        setTimeout(function () {
+          window.location.href = YS_OFFICIAL;
+        }, 500);
+      }
+
+      /* 最终兜底 */
+      function fallback() {
+        openBoth();
+      }
+
+      /* ========== 启动 ========== */
+      main();
+    })();
+  </script>
+</body>
+</html>
