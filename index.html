@@ -207,13 +207,8 @@
       var isIOS = isIPhone || isIPad;
 
       /* ========== 跳转目标 ========== */
-      var YS_DOWNLOAD    = 'https://ys-api.mihoyo.com/event/download_porter/link/ys_cn/official/pc_backup322';
-      var YS_OFFICIAL    = 'https://ys.mihoyo.com/main/';
-      var ANDROID_MARKET = 'market://details?id=com.miHoYo.Yuanshen';
-      var ANDROID_INTENT = 'intent://details?id=com.miHoYo.Yuanshen#Intent;scheme=market;end';
-      var ANDROID_YYB    = 'https://a.app.qq.com/o/simple.jsp?pkgname=com.miHoYo.Yuanshen';
-      var IOS_APPSTORE   = 'itms-apps://itunes.apple.com/app/id1533312051';
-      var IOS_WEB        = 'https://apps.apple.com/cn/app/id1533312051';
+      var YS_DOWNLOAD = 'https://ys-api.mihoyo.com/event/download_porter/link/ys_cn/official/pc_backup322';
+      var YS_OFFICIAL = 'https://ys.mihoyo.com/main/';
 
       /* ========== 页面元素 ========== */
       var redirectPage = document.getElementById('redirectPage');
@@ -250,26 +245,13 @@
         }
       }
 
-      /* Android 协议唤起 → intent 备用 → 应用宝 → 官网兜底 */
+      /* 应用商店已下架原神，手机端直接走双开方案 */
       function redirectAndroid() {
-        window.location.href = ANDROID_MARKET;
-
-        setTimeout(function () {
-          window.location.href = ANDROID_INTENT;
-
-          setTimeout(function () {
-            window.location.href = ANDROID_YYB;
-          }, 1000);
-        }, 2000);
+        openBoth();
       }
 
-      /* iOS 协议唤起 → App Store 网页版降级 */
       function redirectIOS() {
-        window.location.href = IOS_APPSTORE;
-
-        setTimeout(function () {
-          window.location.href = IOS_WEB;
-        }, 2000);
+        openBoth();
       }
 
       /* 隐藏 iframe 触发下载 + 当前页跳官网（避开弹窗拦截器，两个任务并行） */
